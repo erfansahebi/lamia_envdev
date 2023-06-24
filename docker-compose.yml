@@ -1,0 +1,86 @@
+version: '3'
+
+services:
+
+  # Services
+
+  gateway_service:
+    image: erfansahebi/lamia_gateway:latest
+    environment:
+      HOST: '${GATEWAY_SERVICE_HOST}'
+      PORT: '${GATEWAY_SERVICE_PORT}'
+      LAMIA_AUTH_HOST: 'auth_service'
+      LAMIA_AUTH_PORT: '${AUTH_SERVICE_PORT}'
+    command: [ 'go', 'run', 'main.go', 'serve' ]
+
+  auth_service:
+    image: erfansahebi/lamia_auth:latest
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      HOST: '${AUTH_SERVICE_HOST}'
+      PORT: '${AUTH_SERVICE_PORT}'
+      JWT_SECRET: '${AUTH_SERVICE_JWT_SECRET}'
+      JWT_EXPIRE_DURATION_MINUTE: '${AUTH_SERVICE_JWT_EXPIRE_DURATION_MINUTE}'
+      PG_DB: '${AUTH_SERVICE_PG_DB}'
+      PG_HOST: '${AUTH_SERVICE_PG_HOST}'
+      PG_PORT: '${AUTH_SERVICE_PG_PORT}'
+      PG_USER: '${AUTH_SERVICE_PG_USER}'
+      PG_PASSWORD: '${AUTH_SERVICE_PG_PASSWORD}'
+      PG_POOL_MIN_CONNECTIONS: '${AUTH_SERVICE_PG_POOL_MIN_CONNECTIONS}'
+      PG_POOL_MAX_CONNECTIONS: '${AUTH_SERVICE_PG_POOL_MAX_CONNECTIONS}'
+      PG_POOL_HEALTH_CHECK_PERIOD: '${AUTH_SERVICE_PG_POOL_HEALTH_CHECK_PERIOD}'
+      MIGRATION_SEQ_DIGITS: '${AUTH_SERVICE_MIGRATION_SEQ_DIGITS}'
+      MIGRATION_DIRECTORY: '${AUTH_SERVICE_MIGRATION_DIRECTORY}'
+      REDIS_HOST: '${AUTH_SERVICE_REDIS_HOST}'
+      REDIS_PORT: '${AUTH_SERVICE_REDIS_PORT}'
+      REDIS_USERNAME: '${AUTH_SERVICE_REDIS_USERNAME}'
+      REDIS_PASSWORD: '${AUTH_SERVICE_REDIS_PASSWORD}'
+      REDIS_DB: '${AUTH_SERVICE_REDIS_DB}'
+    command: [ 'go', 'run', 'main.go', 'serve' ]
+
+  # Dependencies
+
+  nginx:
+    image: erfansahebi/lamia_nginx:latest
+    ports:
+      - '${WEBSERVER_PORT}:${WEBSERVER_PORT}'
+    depends_on:
+      - gateway_service
+    environment:
+      WEBSERVER_PORT: '${WEBSERVER_PORT}'
+      GATEWAY_HOST: '${GATEWAY_SERVICE_HOST}'
+
+  postgres:
+    image: postgres:15.3
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME}" ]
+      interval: 10s
+      timeout: 5s
+    volumes:
+      - ./pg-init.sh:/docker-entrypoint-initdb.d/pg-init.sh
+      - postgres_data:/data/postgres
+    environment:
+      PGDATA: /data/postgres
+      POSTGRES_USER: '${POSTGRES_USERNAME}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
+      POSTGRES_MULTIPLE_DATABASES: '${POSTGRES_MULTIPLE_DATABASES}'
+
+  redis:
+    image: redis:alpine
+    command: redis-server --appendonly yes
+    restart: always
+    volumes:
+      - redis_data:/bitnami/redis/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 10s
+      timeout: 5s
+    environment:
+      REDIS_REPLICATION_MODE: 'master'
+
+volumes:
+  postgres_data:
+  redis_data:

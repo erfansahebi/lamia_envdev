@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+
+  # Services
+
+  gateway_service:
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./lamia_gateway/:/src/server/
+
+  auth_service:
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./lamia_auth/:/src/server/
+
+  # Dependencies
+
+  postgres:
+    ports:
+      - ${POSTGRES_PUBLIC_HOST}:${POSTGRES_PUBLIC_PORT}:5432
+
+  redis:
+    ports:
+      - ${REDIS_PUBLIC_HOST}:${REDIS_PUBLIC_PORT}:6379
