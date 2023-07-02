@@ -7,4 +7,7 @@ IMAGES := lamia_auth \
 
 # build docker images
 build:
-	for image in $(IMAGES) ; do make -C $$image build; done
+	for image in $(IMAGES) ; do \
+  		echo "----- Building $$image image ... ----- "; \
+		make -C $$image build; \
+	done;
