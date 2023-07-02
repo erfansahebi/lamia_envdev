@@ -11,6 +11,8 @@ services:
       PORT: '${GATEWAY_SERVICE_PORT}'
       LAMIA_AUTH_HOST: 'auth_service'
       LAMIA_AUTH_PORT: '${AUTH_SERVICE_PORT}'
+      LAMIA_SHOP_HOST: 'shop_service'
+      LAMIA_SHOP_PORT: '${SHOP_SERVICE_PORT}'
     command: [ 'go', 'run', 'main.go', 'serve' ]
 
   auth_service:
@@ -38,6 +40,16 @@ services:
       REDIS_PASSWORD: '${AUTH_SERVICE_REDIS_PASSWORD}'
       REDIS_DB: '${AUTH_SERVICE_REDIS_DB}'
     command: [ 'go', 'run', 'main.go', 'serve' ]
+
+  shop_service:
+    image: erfansahebi/lamia_shop
+    depends_on:
+      - postgres
+    environment:
+      HOST: '${SHOP_SERVICE_HOST}'
+      PORT: '${SHOP_SERVICE_PORT}'
+      MAX_WORKERS: '${SHOP_SERVICE_MAX_WORKERS}'
+    command: [ 'python', 'main.py', 'serve' ]
 
   # Dependencies
 

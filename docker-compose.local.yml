@@ -16,6 +16,12 @@ services:
     volumes:
       - ./lamia_auth/:/src/server/
 
+  shop_service:
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./lamia_shop/:/src/server/
+
   # Dependencies
 
   postgres:
